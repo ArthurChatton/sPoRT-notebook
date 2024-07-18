@@ -1,3 +1,8 @@
+Causal cookbook recipes
+================
+Arthur Chatton
+2024-07-18
+
 ## Goal
 
 This is the notebook related to the paper “Is checking for sequential
