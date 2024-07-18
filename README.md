@@ -1,4 +1,4 @@
-Causal cookbook recipes
+Sequential Positivity-Regression Trees (sPoRT) notebook
 ================
 Arthur Chatton
 2024-07-18
