@@ -1,16 +1,9 @@
 library(rpart)
 library(rpart.plot)
 
-
-###############
-## TO DO LIST :
-## - enlever les sous-groupes surnumeraires une fois qu'une violation a gamma-1 modalite a ete trouve dans la boucle gamma
-## - ...
-###############
-
 #' Violation definition
 #'
-#' Produce a row of result from a problematic subgroup for the user output (table of results).
+#' Produce a row of results from a problematic subgroup for the user output (table of results).
 #'
 #' @param subgrp the subgroup produced in port()
 #' @param var Variables names defining the subgroup
@@ -520,51 +513,4 @@ sport <- function(regimen, exposure, time=NULL, id=NULL, lag=0, type_expo="b", c
   return(res)
   
   
-}
-
-
-#' Mediational Positivity Regression Trees algorithm
-#'
-#' Check the positivity assumption for both the exposure and the mediator(s), and identify the problematic individuals/covariates.
-#'
-#' This is a wrapper around port() for mediation analysis.
-#'
-#' @param group Column label of the exposure
-#' @param mediator Column label of the mediator(s), time-ordered if required
-#' @param type_expo Type of the exposure ('b' for binary, 'c' for continuous, or 'n' for nominal)
-#' @param type_media Type of the mediator(s) ('b' for binary, 'c' for continuous, or 'n' for nominal), time-ordered as mediator if required
-#' @param cov.quanti Columns' labels of the quantitative variables in the adjustment sets. Must be a list: (i) Adjustment set for the exposure positivity, (ii and more) Adjustment set(s) for the mediator(s). See Details
-#' @param cov.quali Columns' labels of the qualitative variables in the adjustment sets. Must be a list: (i) Adjustment set for the exposure positivity, (ii and more) Adjustment set(s) for the mediator(s). See Details
-#' @param data Dataset, must be a data.frame
-#' @param alpha Subgroup minimal size (as a proportion of the whole sample)
-#' @param beta Threshold for non-positivity (i.e., extreme exposure's probability).
-#' @param gamma Maximum number of variables to define a subgroup
-#' @param graph Provide the trees as additional output?
-#' @param pruning Boolean, should we keep the 'internal' violation (e.g., >30 & <40)
-#' @param minbucket Rpart hyperparameter, minimum number of individual in the leaves
-#' @param minsplit Rpart hyperparameter, minimum number of individual in a node to be split
-#' @param maxdepth Rpart hyperparameter, maximum number of successive nodes
-#' @param tweak Text size for the graphs
-#'
-#' @return List of data.frames: (i) baseline violations for redefining the target population, (ii and more) regimen-specific (and time-specific if pooled=FALSE) positivity violations.
-#' @export
-#'
-mport <- function (group, mediator, type_expo="b", type_media="b", cov.quanti, cov.quali, data, alpha = 0.05, beta = 0.05, gamma = 2, graph="none", minbucket = 6, minsplit = 20, maxdepth = 30, tweak=1, pruning = FALSE){
-
-  expo <- port(group, cov.quanti=cov.quanti[[1]], cov.quali=cov.quali[[1]], data, alpha, beta, gamma, graph, pruning, minbucket, minsplit, maxdepth, tweak, type_expo=type_expo, mediation=FALSE)
-
-
-
-  media <- sapply(1:length(mediator),
-                  function(g) port(group=mediator[[g]],
-                                   cov.quanti=c(unique(unlist(cov.quanti[1:g])), unlist(mediator[type_media[1:g] == "c"]), group[type_expo=="c"]),
-                                   cov.quali=c(unique(unlist(cov.quali[1:g])), unlist(mediator[type_media[1:g] != "c"]), group[type_expo!="c"]),
-                                   data, alpha, beta, gamma, graph, pruning, minbucket, minsplit, maxdepth, tweak,
-                                   type_expo=type_media[[g]], mediation=TRUE),
-                  simplify=FALSE
-                  ) |> setNames(nm=mediator) # voir si le setnames fonctionne ici
-
-
-  return(list(exposure=expo, mediator=media))
-
 }
