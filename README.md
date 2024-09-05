@@ -85,7 +85,7 @@ Let four intervention rules:
 
 <!-- -->
 
-    #define the number of time points
+    #define number of time-points
     tps <- 1:6
 
     for(t in tps){
@@ -144,7 +144,7 @@ will be checked using rule 1 (but with a probability close to one).
 
     ## Input 5: sPoRT hyperparameters
     monotony <- TRUE #there is a monotone treatment pattern in the data. The function will automatically check positivity on untreated individuals.
-    static <- c(TRUE, FALSE, FALSE) #d1 is static, d3 and d4 are dynamic. When dynamic, sPoRT will check the probability of being treated among those following the rule at time t AND the probability of being untreated among those not following the rule.
+    static <- c(TRUE, FALSE, FALSE) #d1 is static, d3 and d4 are dynamic. When dynamic, sPoRT will check the probability of being treated among those following the rule at time t AND the probability of being to be untreated among those not following the rule.
 
 Now, we can run the `sport` function.
 
@@ -370,24 +370,21 @@ due to pooling over time.
     ## 1 L1_0>=1100          0.002  exposed          2775              28.2
     ## 2   L1>=1160          0.004  exposed          5149              52.3
 
-The results are very close between the strategies in this example, but
-we can see that the subgroups vary across strategies due to the
-various number of individuals following the strategy at the previous
-time.
-
 ## Other inputs and miscenallous
 
-The `sport` function can take several other arguments. First, `lag` is
-used to add lagged effects (e.g., `lag=1` means that we automatically add the confounders from one time to the next, such as
-`L1_1` in the second time). Second, `add.subset` can be specified when one wants to subset more (e.g., A<sub>t-1</sub>=d<sub>t-1</sub> with
-longitudinal targeted maximum likelihood). Third, `pruning` can be set to
-`TRUE` when one focuses only on structural violations because this removes
-violations bounded between two values from the output for clarity (e.g.,
-this may remove violations such as `L1_0>=960 & L1_0< 860`). Last, the
-`rpart` hyperparameters can also be set (Therneau, 2019). By default,
-the function use `minbucket = 6`, `minsplit = 20`, and `maxdepth = 30`
-to allow small subgroups. Other values can be set to split only
-smaller/bigger nodes.
+The `sport`function can takes several other arguments. First, `lag` is
+used to add lagged effects (e.g., `lag=1` means that we automatically
+add the confounders from one time to the next, such as `L1_1` in the
+second time). Second, `add.subset` can be specified when one wants to
+subset more (e.g., A<sub>t-1</sub>=d<sub>t-1</sub> with the longitudinal
+targeted maximum likelihood estimator). Third, `pruning` can be set to
+`TRUE` when one focuses only on structural violations because this
+removes violations bounded between two values from the output for
+clarity (e.g., this may remove violations such as
+`L1_0>=960 & L1_0< 860`). Last, the `rpart` hyperparameters can also be
+set (Therneau, 2019). By default, the function use `minbucket = 6`,
+`minsplit = 20`, and `maxdepth = 30` to allow small subgroups. Other
+values can be set to split only smaller/bigger nodes.
 
 ### References
 
@@ -410,6 +407,13 @@ Trees. 2019. <https://CRAN.R-project.org/package=rpart> (20 October
 2021, date last accessed).
 
 ### Supplementary results
+
+Note that sPoRT for dynamic rules checks positivity in two subsets: the
+individuals following the rule (`Aeq1`) and those not following the rule
+(`Aeq0`). For tyhe first subset, a lack of positivity is present when
+some subgroups have a tiny probability to be treated. In contrast, the
+probability to be treated must be high in the second subset for
+diagnosing positivity issues.
 
 Stratified on time, rule 3:
 
@@ -948,4 +952,4 @@ Pooled over time, rule 4:
 
 ### Updates history
 
-The first update is planned for the release of the `port` package.
+First update planned for the release of the `port` package.
