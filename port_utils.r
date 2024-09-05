@@ -1,3 +1,4 @@
+
 library(rpart)
 library(rpart.plot)
 
@@ -23,7 +24,7 @@ define_cutoff <- function(subgrp, var, type_var, data, pruning, type_expo="b", m
   pourcent <- round(n/subgrp$n[1], digits = 3) * 100
   if(type_expo!="b"){
     all_prob <- subgrp$proba[nrow(subgrp),]
-    pb_prob <- which(all_prob<=beta | all_prob>=(1-beta))
+    pb_prob <- which(all_prob<=beta | all_prob>=(1-beta)) #modifier ici pour uni vs bilat et ajouter ca dans la partie du dessous (=="b"). NON modifier dans port directement pour permettre de rerun la var
     proba <- round(all_prob[pb_prob], digits = 3) |> setNames(nm=NULL)
     treat <- levels(data[,group])[pb_prob]
   }else{
@@ -31,7 +32,7 @@ define_cutoff <- function(subgrp, var, type_var, data, pruning, type_expo="b", m
     treat <- "exposed"
   }
   newcut <- subgrp
-
+  
   for (v in var) {
     if (type_var[var == v] == "continuous") {
       imcs <- newcut$var2[grepl(v, newcut$var2, fixed = TRUE)]
@@ -72,7 +73,7 @@ define_cutoff <- function(subgrp, var, type_var, data, pruning, type_expo="b", m
       }
     }
   }
-
+  
   if(mediation){
     tab <- data.frame(subgroup=paste(unique(newcut$var2), collapse=" & ") |> rep(length(treat)),
                       proba.mediator=unlist(proba),
@@ -82,14 +83,14 @@ define_cutoff <- function(subgrp, var, type_var, data, pruning, type_expo="b", m
                       row.names = NULL)
   }else{
     tab <- data.frame(subgroup=paste(unique(newcut$var2), collapse=" & ") |> rep(length(treat)),
-                    proba.exposure=unlist(proba),
-                    exposure=treat,
-                    subgroup.size=n  |> rep(length(treat)),
-                    subgroup.rel.size=pourcent  |> rep(length(treat)),
-                    row.names = NULL)
+                      proba.exposure=unlist(proba),
+                      exposure=treat,
+                      subgroup.size=n  |> rep(length(treat)),
+                      subgroup.rel.size=pourcent  |> rep(length(treat)),
+                      row.names = NULL)
   }
-
-
+  
+  
   return(list(data = newcut, table=tab))
 }
 
@@ -128,7 +129,7 @@ labels.rpart <- function(object, data, digits = 4, minlength = 1L,
   vnames <- ff$var[whichrow]
   index <- cumsum(c(1, ff$ncompete + ff$nsurrogate + whichrow))
   irow <- index[c(whichrow, FALSE)]
-  ncat <- object$splits[irow, 2L]
+  ncat <- object$splits[irow, 2L] #1 if >=, -1 if <
   lsplit <- rsplit <- character(length(irow))
   if (any(ncat < 2L)) {
     jrow <- irow[ncat < 2L]
@@ -136,9 +137,7 @@ labels.rpart <- function(object, data, digits = 4, minlength = 1L,
     
     if(length(splits) == 1) names(splits) <- vnames
     
-    cutpoint <- sapply(1:length(splits), function(s) 
-      findInterval(splits[s], sort(unique(data[,unique(names(splits[s]))])))
-    )
+    cutpoint <- sapply(1:length(splits), function(s) findInterval(splits[s], sort(unique(data[,unique(names(splits[s]))]))))
     
     temp1 <- (ifelse(ncat < 0, "< ", ">="))[ncat < 2L]
     temp2 <- (ifelse(ncat < 0, ">=", "< "))[ncat < 2L]
@@ -154,10 +153,10 @@ labels.rpart <- function(object, data, digits = 4, minlength = 1L,
     }
     
     lsplit[ncat < 2L] <- sapply(1:length(splits), function(s) 
-      paste0(temp1[s], formatg(sort(unique(data[,unique(names(splits[s]))]))[cutpoint[s]+1*(ncat[ncat < 2L][s] < 0)], digits=digits))
+      paste0(temp1[s], formatg(sort(unique(data[,unique(names(splits[s]))]))[cutpoint[s]+1], digits=digits))
     )
     rsplit[ncat < 2L] <- sapply(1:length(splits), function(s) 
-      paste0(temp2[s], formatg(sort(unique(data[,unique(names(splits[s]))]))[cutpoint[s]+1*(ncat[ncat < 2L][s] > 0)], digits = digits))
+      paste0(temp2[s], formatg(sort(unique(data[,unique(names(splits[s]))]))[cutpoint[s]+1], digits = digits))
     )
   }
   if (any(ncat > 1L)) {
@@ -255,7 +254,7 @@ port <- function (group, type_expo="b", cov.quanti, cov.quali, data, alpha = 0.0
     }
   }
   if (type_expo=="c") { # categorisation according to the quartiles
-      data[, group] <- as.factor(cut(data[, group], breaks = quantile(data[, group], seq(0, 1, by = 0.25), na.rm = FALSE)))
+    data[, group] <- as.factor(cut(data[, group], breaks = quantile(data[, group], seq(0, 1, by = 0.25), na.rm = FALSE)))
   }
   if(type_expo=="n"){ # nominal
     data[, group] <- as.factor(data[,group])
@@ -263,20 +262,20 @@ port <- function (group, type_expo="b", cov.quanti, cov.quali, data, alpha = 0.0
       stop("At least three modalities are required in the argument \'group\' when the argument \'type_expo\' is \'n\' (i.e., nominal).")
     }
   }
-
+  
   if(length(cov.quali)>1){
     data[, cov.quali] <- apply(data[, cov.quali], 2, as.factor)
   }else{
     if(length(cov.quali)==1) data[, cov.quali] <- as.factor(data[, cov.quali])
   }
-
+  
   covariates <- c(cov.quanti, cov.quali)
   m <- length(covariates)
   up <- sapply(1:gamma, function(x) ncol(combn(m,x)))
   savegraph <- problem_covariates <- problem_cutoffs <- list()
-
+  
   combi <- sapply(1:gamma, function(x) combn(m, x) |> split(f=col(combn(m, x))) |> unname() ) |> unlist(recursive = FALSE)
-
+  
   for (q in 1:length(combi)) {
     if (q %in% (up+1)) { # remove problematic covariates already identified when gamma is updated
       if (length(problem_cutoffs) > 0) {
@@ -304,7 +303,7 @@ port <- function (group, type_expo="b", cov.quanti, cov.quali, data, alpha = 0.0
     if(type_expo=="b"){
       for (i in 1:nrow(frame)) { #read tree with alpha & beta -> save problematic nodes
         if ((frame$yval[i] >= 1 - beta || frame$yval[i] <=
-             beta) && frame$n[i] >= nrow(data) * alpha) {
+             beta) && frame$n[i] >= nrow(data) * alpha) { #modifier uni vs bilat ici
           problematic_nodes <- c(problematic_nodes, as.numeric(rownames(frame)[i]))
         }
       }
@@ -324,7 +323,7 @@ port <- function (group, type_expo="b", cov.quanti, cov.quali, data, alpha = 0.0
         }
       }
     }
-
+    
     problematic_path <- list()
     for (i in problematic_nodes) { # save the path from root to the pb node
       problematic_path[[as.character(i)]] <- frame[which(rownames(frame) %in% parent(i)), c("var", "var2", "n")]
@@ -333,14 +332,14 @@ port <- function (group, type_expo="b", cov.quanti, cov.quali, data, alpha = 0.0
       }else{
         problematic_path[[as.character(i)]]$proba <- p_a[which(rownames(frame) %in%  parent(i)),]
       }
-
+      
     }
     problem_names <- 1
     for (i in names(problematic_path)) {
       problem_names <- c(rownames(problematic_path[[i]]), problem_names)
     }
     problem_names <- unique(problem_names)
-
+    
     ####
     if(graph!="none"){
       cols<-ifelse(as.numeric(row.names(cart_max$frame)) %in% problem_names,"red","blue")
@@ -348,7 +347,7 @@ port <- function (group, type_expo="b", cov.quanti, cov.quali, data, alpha = 0.0
       savegraph[[q]] <- list(tree=recordPlot(load=c("rpart", "rpart.plot")), problem=ifelse(length(problematic_path) != 0, TRUE, FALSE))
     }
     ###
-
+    
     if (length(problematic_path) > 0) { # save all new prb path in problem_cutoff (can thereby reuse problematic_path for the next iteration)
       for (k in 1:length(problematic_path)){
         if (length(problem_cutoffs) == 0 || !any(sapply(problem_cutoffs, problematic_path[k][[names(problematic_path[k])]], FUN = identical)) ) {
@@ -358,7 +357,7 @@ port <- function (group, type_expo="b", cov.quanti, cov.quali, data, alpha = 0.0
       }
     }
   } # end of the "q" for-loop
-
+  
   res <- data.frame()
   if (length(problem_cutoffs) > 0) {
     for (i in 1:length(problem_cutoffs)) {
@@ -369,7 +368,7 @@ port <- function (group, type_expo="b", cov.quanti, cov.quali, data, alpha = 0.0
       }
       problem_covariates[[i]] <- paste(problem_covariates[[i]],  collapse = ";")
       cut <- define_cutoff(problem_cutoffs[[i]], vars, type_var=type, data, pruning = pruning, type_expo, mediation, beta, group)
-
+      
       if (is.null(cut$data)) {
         problem_cutoffs[[i]] <- NULL
         problem_covariates[[i]] <- NULL
@@ -377,15 +376,15 @@ port <- function (group, type_expo="b", cov.quanti, cov.quali, data, alpha = 0.0
         problem_cutoffs[[i]] <- cut$data
         if(cut$table$subgroup=='root') return("The whole sample presents an exposure prevalence higher than \'beta\'.")
       }
-
-
+      
+      
       res <- rbind(res, cut$table)
-
+      
     }
-
+    
     #enregistrer les variables plutot que les graphs et ajouter une fonction pour retrouver les arbres entiers a partir de l'objet port.
     if(graph!="none") savegraph <- savegraph[which(sapply(lapply(savegraph, '[[', 'problem'), function(x) !is.null(x)))] #cut null result from tree not built because an one-variable violation was found
-
+    
     output <- switch(graph,
                      all=list(
                        table = res,
@@ -402,13 +401,13 @@ port <- function (group, type_expo="b", cov.quanti, cov.quali, data, alpha = 0.0
                        correct.graphs = lapply(savegraph[!sapply(savegraph, '[[', 'problem')], '[[', 'tree')
                      )
     )
-
+    
   }else{
-
+    
     output <- "No problematic subgroup was identified."
-
+    
   }
-
+  
   return(output)
 }
 
@@ -418,95 +417,117 @@ port <- function (group, type_expo="b", cov.quanti, cov.quali, data, alpha = 0.0
 #' Check the sequential positivity assumption for longitudinal/panel data to identify problematic subgroups/covariables over time.
 #' This function is a wrapper around port() and deals with wide or long data.frames.
 #'
-#' @param regimen Regimens indicators. Must be a list of each regimen columns' labels.
-#' @param exposure Vector of the observed time-varying exposure/treatment/intervention columns' label or number. Must have the same length that each regimen.
-#' @param time Column name for the time when pooled=T, vector of time when pooled=F (optional).
-#' @param id Column name for the statistical unit identifier variable (only needed when pooled=T)
+#' @param A Intervention indicators. Must be a list of each intervention columns' labels.
+#' @param D.bar Treatement strategy history's column names. Must be a matrix (n*times).
+#' @param time Column name for the time when pooled=T, vector of time when pooling=F (optional).
+#' @param static Boolean, is the rule static (TRUE, default) or dynamic (FALSE).
+#' @param monotony Boolean, is the treatment pattern is monotone in data? FALSE by default. See Details.
+#' @param add.subset Column name related to an indicator of additionnal subseting (1 to keep, 0 to remove), See Details.
 #' @param lag Lagged values to consider for covariates (default is 1). See Details
-#' @param type_expo Type of the exposure ('b' for binary, 'c' for continuous, or 'n' for nominal)
+#' @param type_A Type of the intervention ('b' for binary, 'c' for continuous, or 'n' for nominal)
 #' @param cov.quanti Columns' labels of the quantitative variables in the adjustment set. Must be a list with the same length than group if pooled=FALSE. See Details
 #' @param cov.quali Columns' labels of the qualitative variables in the adjustment set. Must be a list with the same length than group if pooled=FALSE. See Details
 #' @param data Dataset, either in the wide format (if pooled=FALSE) or long format (if pooled=TRUE)
-#' @param pooled Boolean, should the positivity be checked at each time or globally?
+#' @param pooling Boolean, should the positivity be checked at each time (FALSE, default) or globally (TRUE)?
+#' @param subseting Character, should the positivity be checked for for individuals who should follow the strategy ('f'), not follow ('n'), or both ('b', default). 
 #' @param alpha Subgroup minimal size (as a proportion of the whole sample)
 #' @param beta Threshold for non-positivity (i.e., extreme exposure's probability).
 #' @param gamma Maximal number of variables to define a subgroup
 #' @param minbucket Rpart hyperparameter, minimum number of individual in the leaves
 #' @param minsplit Rpart hyperparameter, minimum number of individual in a node to be split
 #' @param maxdepth Rpart hyperparameter, maximum number of successive nodes
-#' @param pruning Boolean, should we keep the 'internal' violation (e.g., 20<X<30)
+#' @param pruning Boolean, should we keep the 'internal' violation (e.g., 20<cov<30)
 #'
 #' @return List of regimen-specific (and time-specific if pooled=FALSE) data.frames with the potential positivity violations identified.
 #' @export
 #' 
-sport <- function(regimen, exposure, time=NULL, id=NULL, lag=0, type_expo="b", cov.quanti, cov.quali, data, pooled=FALSE, alpha = 0.05, beta = 'gruber', gamma = 2, minbucket = 6, minsplit = 20, maxdepth = 30, pruning = FALSE){
+sport <- function(A, D.bar, static=TRUE, monotony=FALSE, add.subset=NULL, time=NULL, lag=0, type_A="b", cov.quanti, cov.quali, data, pooling=FALSE, subseting='b', alpha = 0.05, beta = 'gruber', gamma = 2, minbucket = 6, minsplit = 20, maxdepth = 30, pruning = FALSE){
   
-  tps <- length(exposure)
-  n.regi <- length(regimen)
+  ###
+  # add checks here
+  ###
   
+  tps <- length(A)
   
-  if(!pooled){ #need data in wide format
+
+  if(!pooling){ #need data in wide format
     
     if(is.null(time)) time <- paste0("T", 1:tps)
     
     
-    res <- lapply(1:n.regi,
-                  function(g) sapply(1:tps,
-                                     function(t){
-                                       
-                                       if(t==1){
-                                         d <- data
-                                       }else{
-                                         if(all(data[,regimen[[g]][1]]==0)){ #never treat strategy
-                                           d <- subset(data, get(regimen[[g]][t-1])==0)
-                                         }else{
-                                           d <- subset(data, get(regimen[[g]][t-1])==1)
-                                         } 
-                                       }
-                                       
-                                       qlcov <- unique(unlist(cov.quali[(t-lag):t])) 
-                                       qtcov <-  unique(unlist(cov.quanti[(t-lag):t]))
-                                       
-                                       print(paste("time", t, "and groupe", g)) 
-                                       
-                                       return( port(exposure[t], type_expo=type_expo, cov.quanti=qtcov, cov.quali=qlcov, data=d, alpha=alpha, beta=beta, gamma=gamma, mediation=FALSE, pruning=pruning, minbucket=minbucket, minsplit=minsplit, maxdepth=maxdepth) )
-                                       
-                                     },
-                                     simplify=FALSE
-                  )
-    )
-    
-    names(res) <- names(regimen)
-    for(i in 1:length(res)){
-      names(res[[i]]) <- time
-    }
+    res <- sapply(1:tps,
+                 function(t){
+                   
+                   if(t==1){
+                     
+                     subdata <- data
+                     
+                   }else{
+                     
+                      if(monotony){
+                        subdata <- subset(data, get(A[t-1])==0)
+                      }else{
+                        subdata <- data
+                      }
+                      
+                      if(!is.null(add.subset)) subdata <- subset(subdata, get(add.subset[t])==1)
+                      
+                      if(!static){
+                        subdata <- list(Aeq1 = subset(subdata, get(D.bar[t])==1),
+                                        Aeq0 = subset(subdata, get(D.bar[t])==0)
+                        )
+                      }
+                      
+                   }
+                   
+                   qlcov <- unique(unlist(cov.quali[(t-lag):t])) 
+                   qtcov <-  unique(unlist(cov.quanti[(t-lag):t]))
+                   
+                   print(paste("time", t)) 
+                   
+                   if(length(subdata)==2){ #add argument in port() for checking positivity only one side, useful for mport too
+                     res.t <- list(Aeq1 = port(A[t], type_expo=type_A, cov.quanti=qtcov, cov.quali=qlcov, data=subdata[[1]], alpha=alpha, beta=beta, gamma=gamma, mediation=FALSE, pruning=pruning, minbucket=minbucket, minsplit=minsplit, maxdepth=maxdepth),
+                                   Aeq0 = port(A[t], type_expo=type_A, cov.quanti=qtcov, cov.quali=qlcov, data=subdata[[2]], alpha=alpha, beta=beta, gamma=gamma, mediation=FALSE, pruning=pruning, minbucket=minbucket, minsplit=minsplit, maxdepth=maxdepth)
+                              )
+                   }else{
+                     res.t <- port(A[t], type_expo=type_A, cov.quanti=qtcov, cov.quali=qlcov, data=subdata, alpha=alpha, beta=beta, gamma=gamma, mediation=FALSE, pruning=pruning, minbucket=minbucket, minsplit=minsplit, maxdepth=maxdepth)
+                   }
+                   
+                   return( res.t )
+                   
+                 },
+                 simplify=FALSE
+)
+
+      names(res) <- time #voir ici
     
   }else{ #if pool=T, need data in long_format
     
-    add_lag_pool <- function(data, var, id, newname, def.value){
-      
-      data <- data[order(data[,id]),]
-      data[, newname]<- c(NA, data[-nrow(data),var])
-      data[which(!duplicated(data[,id])), newname] <- NA
-      data[is.na(data[,newname]) & !is.na(data[,var]),newname] <- def.value
-      
-      return(data)
-      
+    
+   #for monotony, should pass by add.subset (or, little trick, pas sthe name of the previous A in monotony)
+                  
+                    
+    if(!is.null(add.subset)){
+      subdata <- subset(data, get(add.subset)==1)
+    }else{
+      subdata <- data
     }
     
-    for(i in 1:n.regi){
-      data <- add_lag_pool(data, regimen[i], id, paste0(regimen[i],"_lag"), 1)
-    }
+    if(!isTRUE(monotony)) subdata <- subset(data, get(monotony)==0)
     
-    res <- sapply(1:n.regi,
-                  function(g){
+    
+    if(!static){
+      subdata <- list(Aeq1 = subset(subdata, get(D.bar)==1),
+                      Aeq0 = subset(subdata, get(D.bar)==0)
+      )
+      
+      res <- list(Aeq1 = port(group=A, type_expo=type_A, cov.quanti=cov.quanti, cov.quali=cov.quali, data=subdata[[1]], alpha = alpha, beta = beta, gamma = gamma, mediation=FALSE, pruning = pruning, minbucket = minbucket, minsplit = minsplit, maxdepth = maxdepth),
+                    Aeq0 = port(group=A, type_expo=type_A, cov.quanti=cov.quanti, cov.quali=cov.quali, data=subdata[[2]], alpha = alpha, beta = beta, gamma = gamma, mediation=FALSE, pruning = pruning, minbucket = minbucket, minsplit = minsplit, maxdepth = maxdepth))
+      
+    }else{
+      res <- port(group=A, type_expo=type_A, cov.quanti=cov.quanti, cov.quali=cov.quali, data=subdata, alpha = alpha, beta = beta, gamma = gamma, mediation=FALSE, pruning = pruning, minbucket = minbucket, minsplit = minsplit, maxdepth = maxdepth)
+    }
                     
-                    d <- subset(data, get(paste0(regimen[g],"_lag"))==1)
-                    
-                    port(group=exposure, type_expo=type_expo, cov.quanti=cov.quanti, cov.quali=cov.quali, data=d, alpha = alpha, beta = beta, gamma = gamma, mediation=FALSE, pruning = pruning, minbucket = minbucket, minsplit = minsplit, maxdepth = maxdepth)
-                  },
-                  simplify=FALSE
-    )
     
   }
   
