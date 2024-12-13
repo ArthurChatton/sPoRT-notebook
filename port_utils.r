@@ -1,3 +1,4 @@
+
 library(rpart)
 library(rpart.plot)
 
@@ -258,9 +259,11 @@ parent <- function(x) {
 #'
 #' @examples
 port <- function (A, type_A="b", cov.quanti, cov.quali, data, alpha = 0.05, beta = 'gruber', gamma = 2, check.side="both", mediation=FALSE, graph="none", pruning = FALSE, minbucket = 6, minsplit = 20, maxdepth = 30, tweak=1){
+  
   if (!(is.data.frame(data) | is.matrix(data))){
     stop("The argument \'data\' need to be a data.frame or a matrix")
   }
+  if(nrow(data)==0) return("Empty dataset.") #use return instead of stop for sport(). 
   if (alpha > 0.5 | alpha < 0)
     stop("The argument \'alpha\' must be a proportion (e.g., 0.05 for 5%).")
   if(beta=='gruber') beta <- gruber(data)
@@ -280,8 +283,9 @@ port <- function (A, type_A="b", cov.quanti, cov.quali, data, alpha = 0.05, beta
       stop("At least three modalities are required in the argument \'A\' when the argument \'type_A\' is \'n\' (i.e., nominal).")
     }
   }
-  
-  if(any(prop.table(table(data[,A]))<=beta)) return("The whole sample presents at least one exposure modality's prevalence outside [beta; 1-beta].")
+  check_prop_a <- prop.table(table(data[,A]))
+  if(any(check_prop_a<=beta) & check.side!="one") return("The whole sample presents at least one exposure modality's prevalence lower than beta.")
+  if(any(check_prop_a >= 1-beta) & check.side!="zero") return("The whole sample presents at least one exposure modality's prevalence higher than 1-beta.")
   
   if(length(cov.quali)>1){
     data[, cov.quali] <- apply(data[, cov.quali], 2, as.factor)
@@ -489,14 +493,14 @@ sport <- function(A, D.bar, static=TRUE, monotony=FALSE, add.subset=NULL, time=N
   ###
   # add checks here
   ###
-  
-  if(!pooling & monotony){
-    if( data[data[,D.bar[length(D.bar)]]==0,D.bar] |> rowSums(, na.rm=T) |> sum() != 0){ stop("In case of treatment monotony, the rule values of the variables passed in the argument \'D.bar\' must be monotone too (i.e., cannot be 1 then 0).") }
-  } 
  
   tps <- length(A)
   
   if(!pooling){ #need data in wide format
+    
+    if(!pooling & monotony){
+      if( data[data[,D.bar[length(D.bar)]]==0,D.bar] |> rowSums(, na.rm=T) |> sum() != 0){ stop("In case of treatment monotony, the rule values of the variables passed in the argument \'D.bar\' must be monotone too (i.e., cannot be 1 then 0).") }
+    } 
     
     if(is.null(time)) time <- paste0("T", 1:tps)
     
@@ -504,44 +508,32 @@ sport <- function(A, D.bar, static=TRUE, monotony=FALSE, add.subset=NULL, time=N
     res <- sapply(1:tps,
                   function(t){
                     
-                    if(t==1){
-                      
-                      subdata <- data
-                      
-                    }else{
-                      
-                      if(monotony){
+                    if(monotony & t!=1){
                         subdata <- subset(data, get(A[t-1])==0)
-                      }else{
+                    }else{
                         subdata <- data
-                      }
-                      
-                      if(!is.null(add.subset)) subdata <- subset(subdata, get(add.subset[t])==1)
-                      
-                      if(!static){
-                        subdata <- list(Aeq1 = subset(subdata, get(D.bar[t])==1),
-                                        Aeq0 = subset(subdata, get(D.bar[t])==0)
-                        )
-                      }else{
-                        data[,A[t]] <- 1*(data[,A[t]]==data[,D.bar[t]])
-                      }
-                      
                     }
+                      
                     
-                    qlcov <- unique(unlist(cov.quali[(t-lag):t])) 
-                    qtcov <-  unique(unlist(cov.quanti[(t-lag):t]))
+                    
+                    if(!is.null(add.subset)) subdata <- subset(subdata, get(add.subset[t])==1)
+                      
+                    subdata <- list(Aeq1 = subset(subdata, get(D.bar[t])==1),
+                                    Aeq0 = subset(subdata, get(D.bar[t])==0))
+                    
+                    
+                    qlcov <- unique(unlist(cov.quali[max(0,(t-lag)):t])) 
+                    qtcov <-  unique(unlist(cov.quanti[max(0,(t-lag)):t]))
                     
                     print(paste("time", t)) 
 
-                    if(length(subdata)==2){
-                      res.t <- list(Aeq1 = port(A[t], type_A=type_A, cov.quanti=qtcov, cov.quali=qlcov, data=subdata[[1]], alpha=alpha, beta=beta, gamma=gamma, check.side="zero", mediation=FALSE, pruning=pruning, minbucket=minbucket, minsplit=minsplit, maxdepth=maxdepth),
-                                    Aeq0 = port(A[t], type_A=type_A, cov.quanti=qtcov, cov.quali=qlcov, data=subdata[[2]], alpha=alpha, beta=beta, gamma=gamma, check.side="one", mediation=FALSE, pruning=pruning, minbucket=minbucket, minsplit=minsplit, maxdepth=maxdepth)
-                      )
-                    }else{
-                      res.t <- port(A[t], type_A=type_A, cov.quanti=qtcov, cov.quali=qlcov, data=subdata, alpha=alpha, beta=beta, gamma=gamma, check.side="zero", mediation=FALSE, pruning=pruning, minbucket=minbucket, minsplit=minsplit, maxdepth=maxdepth)
-                    }
                     
-                    return( res.t )
+                    res.t <- list(Aeq1 = port(A[t], type_A=type_A, cov.quanti=qtcov, cov.quali=qlcov, data=subdata[[1]], alpha=alpha, beta=beta, gamma=gamma, check.side="zero", mediation=FALSE, pruning=pruning, minbucket=minbucket, minsplit=minsplit, maxdepth=maxdepth),
+                                  Aeq0 = port(A[t], type_A=type_A, cov.quanti=qtcov, cov.quali=qlcov, data=subdata[[2]], alpha=alpha, beta=beta, gamma=gamma, check.side="one", mediation=FALSE, pruning=pruning, minbucket=minbucket, minsplit=minsplit, maxdepth=maxdepth)
+                      )
+                    
+                    
+                    return(res.t)
                     
                   },
                   simplify=FALSE
@@ -563,21 +555,11 @@ sport <- function(A, D.bar, static=TRUE, monotony=FALSE, add.subset=NULL, time=N
     
     if(is.character(monotony)) subdata <- subset(data, get(monotony)==0)
     
-    
-    if(!static){
-      subdata <- list(Aeq1 = subset(subdata, get(D.bar)==1),
-                      Aeq0 = subset(subdata, get(D.bar)==0)
-      )
+    subdata <- list(Aeq1 = subset(subdata, get(D.bar)==1),
+                    Aeq0 = subset(subdata, get(D.bar)==0))
       
       res <- list(Aeq1 = port(A=A, type_A=type_A, cov.quanti=cov.quanti, cov.quali=cov.quali, data=subdata[[1]], alpha = alpha, beta = beta, gamma = gamma, check.side="zero", mediation=FALSE, pruning = pruning, minbucket = minbucket, minsplit = minsplit, maxdepth = maxdepth),
                   Aeq0 = port(A=A, type_A=type_A, cov.quanti=cov.quanti, cov.quali=cov.quali, data=subdata[[2]], alpha = alpha, beta = beta, gamma = gamma, check.side="one", mediation=FALSE, pruning = pruning, minbucket = minbucket, minsplit = minsplit, maxdepth = maxdepth))
-      
-    }else{
-    
-      data[,A] <- 1*(data[,A]==data[,D.bar])
-      
-      res <- port(A=A, type_A=type_A, cov.quanti=cov.quanti, cov.quali=cov.quali, data=subdata, alpha = alpha, beta = beta, gamma = gamma, check.side="zero", mediation=FALSE, pruning = pruning, minbucket = minbucket, minsplit = minsplit, maxdepth = maxdepth)
-    }
     
     
   }
@@ -586,4 +568,3 @@ sport <- function(A, D.bar, static=TRUE, monotony=FALSE, add.subset=NULL, time=N
   
   
 }
-
