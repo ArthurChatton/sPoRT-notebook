@@ -213,7 +213,10 @@ two list displayed at each time, `Aeq0` for the results when subsetting
 on `dt=0`, which is the subsetting of interested for our never initiate
 strategy, and `Aeq1` for the results when subsetting on `dt=1`, which
 make sense for a strategy like always treat. Both are computed since the
-algorithm is agnostic about the subsetting of interest.
+algorithm is agnostic about the subsetting of interest. However, both
+needs to be considered for dynamic rules (such as `d3` and `d4`): those
+that should have initiated according to the rule and those that should
+have not initiated according to the rule.
 
 These violations are defined in terms of subgroups, such as the
 individuals with L1\_0&lt; 400 have 0.7% chance of being `A_1=0`, which
