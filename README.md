@@ -341,7 +341,9 @@ smaller/bigger nodes.
 
 Chatton A, Schomaker M, Luque-Fernandez M-A, Platt RW, Schnitzer ME.
 Regression trees for nonparametric diagnostics of sequential positivity
-violations in longitudinal causal inference. *Submitted*. 2024.
+violations in longitudinal causal inference. *arXiv*. 2024. 
+DOI: 10.48550/arXiv.2412.10245
+
 
 Gruber S, Phillips RV, Lee H, van der Laan MJ. Data-Adaptive Selection
 of the Propensity Score Truncation Level for
