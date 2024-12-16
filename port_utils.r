@@ -493,7 +493,7 @@ sport <- function(A, D.bar, static=TRUE, monotony=FALSE, add.subset=NULL, time=N
   ###
   # add checks here
   ###
- 
+  
   tps <- length(A)
   
   if(!pooling){ #need data in wide format
@@ -509,15 +509,15 @@ sport <- function(A, D.bar, static=TRUE, monotony=FALSE, add.subset=NULL, time=N
                   function(t){
                     
                     if(monotony & t!=1){
-                        subdata <- subset(data, get(A[t-1])==0)
+                      subdata <- subset(data, get(A[t-1])==0)
                     }else{
-                        subdata <- data
+                      subdata <- data
                     }
-                      
+                    
                     
                     
                     if(!is.null(add.subset)) subdata <- subset(subdata, get(add.subset[t])==1)
-                      
+                    
                     subdata <- list(Aeq1 = subset(subdata, get(D.bar[t])==1),
                                     Aeq0 = subset(subdata, get(D.bar[t])==0))
                     
@@ -526,11 +526,16 @@ sport <- function(A, D.bar, static=TRUE, monotony=FALSE, add.subset=NULL, time=N
                     qtcov <-  unique(unlist(cov.quanti[max(0,(t-lag)):t]))
                     
                     print(paste("time", t)) 
-
+                    
                     
                     res.t <- list(Aeq1 = port(A[t], type_A=type_A, cov.quanti=qtcov, cov.quali=qlcov, data=subdata[[1]], alpha=alpha, beta=beta, gamma=gamma, check.side="zero", mediation=FALSE, pruning=pruning, minbucket=minbucket, minsplit=minsplit, maxdepth=maxdepth),
                                   Aeq0 = port(A[t], type_A=type_A, cov.quanti=qtcov, cov.quali=qlcov, data=subdata[[2]], alpha=alpha, beta=beta, gamma=gamma, check.side="one", mediation=FALSE, pruning=pruning, minbucket=minbucket, minsplit=minsplit, maxdepth=maxdepth)
-                      )
+                    )
+                    
+                    if(is.data.frame(res.t[[2]])){
+                      res.t[[2]][,2] <- 1-res.t[[2]][,2]
+                      res.t[[2]][,3] <- "unexposed"
+                    }
                     
                     
                     return(res.t)
@@ -557,9 +562,9 @@ sport <- function(A, D.bar, static=TRUE, monotony=FALSE, add.subset=NULL, time=N
     
     subdata <- list(Aeq1 = subset(subdata, get(D.bar)==1),
                     Aeq0 = subset(subdata, get(D.bar)==0))
-      
-      res <- list(Aeq1 = port(A=A, type_A=type_A, cov.quanti=cov.quanti, cov.quali=cov.quali, data=subdata[[1]], alpha = alpha, beta = beta, gamma = gamma, check.side="zero", mediation=FALSE, pruning = pruning, minbucket = minbucket, minsplit = minsplit, maxdepth = maxdepth),
-                  Aeq0 = port(A=A, type_A=type_A, cov.quanti=cov.quanti, cov.quali=cov.quali, data=subdata[[2]], alpha = alpha, beta = beta, gamma = gamma, check.side="one", mediation=FALSE, pruning = pruning, minbucket = minbucket, minsplit = minsplit, maxdepth = maxdepth))
+    
+    res <- list(Aeq1 = port(A=A, type_A=type_A, cov.quanti=cov.quanti, cov.quali=cov.quali, data=subdata[[1]], alpha = alpha, beta = beta, gamma = gamma, check.side="zero", mediation=FALSE, pruning = pruning, minbucket = minbucket, minsplit = minsplit, maxdepth = maxdepth),
+                Aeq0 = port(A=A, type_A=type_A, cov.quanti=cov.quanti, cov.quali=cov.quali, data=subdata[[2]], alpha = alpha, beta = beta, gamma = gamma, check.side="one", mediation=FALSE, pruning = pruning, minbucket = minbucket, minsplit = minsplit, maxdepth = maxdepth))
     
     
   }
@@ -568,3 +573,4 @@ sport <- function(A, D.bar, static=TRUE, monotony=FALSE, add.subset=NULL, time=N
   
   
 }
+
