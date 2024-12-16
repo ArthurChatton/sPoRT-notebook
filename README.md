@@ -1,13 +1,14 @@
 Sequential Positivity-Regression Trees (sPoRT) notebook
 ================
 Arthur Chatton
-2024-12-02
+2024-12-16
 
 ## Goal
 
-This is the notebook related to the paper “Is checking for sequential
-positivity violations getting you down? Try sPoRT!” by Chatton,
-Schomaker, Luque-Fernandez, Platt and Schnitzer (Submitted).
+This is the notebook related to the paper “Regression trees for
+nonparametric diagnostics of sequential positivity violations in
+longitudinal causal inference” by Chatton, Schomaker, Luque-Fernandez,
+Platt and Schnitzer (Submitted).
 
 This notebook aims to illustrate the sPoRT algorithm’s use with
 illustrations on a simulated dataset. The algorithm is implemented in R
@@ -184,114 +185,39 @@ The output of sPoRT is a list of table. Each table represents the
 violations identified at a certain time for a certain strategy. For
 instance:
 
+    d2_strat_results <- d2_strat_results |> lapply("[[", "Aeq0")
     d2_strat_results
 
     ## $T1
-    ##     subgroup proba.exposure exposure subgroup.size subgroup.rel.size
-    ## 1  L1_0>=980          0.004  exposed           915              18.3
-    ## 2 L1_1>=1040          0.003  exposed           896              17.9
+    ##    subgroup proba.exposure  exposure subgroup.size subgroup.rel.size
+    ## 1 L1_0< 400          0.007 unexposed          1223              24.5
+    ## 2 L1_1< 460          0.005 unexposed          1288              25.8
     ## 
     ## $T2
-    ##     subgroup proba.exposure exposure subgroup.size subgroup.rel.size
-    ## 1  L1_0>=940          0.006  exposed          1063              45.3
-    ## 2  L1_2>=960          0.010  exposed          1419              60.4
-    ## 3 L2_2>=0.35          0.008  exposed           130               5.5
+    ## [1] "No problematic subgroup was identified."
     ## 
     ## $T3
-    ##                              subgroup proba.exposure exposure subgroup.size
-    ## 1                           L1_0>=940          0.007  exposed          1057
-    ## 2                           L1_3>=960          0.013  exposed          1621
-    ## 3                          L2_3>=0.35          0.009  exposed           221
-    ## 4 Y_0< -2 & W3>=36 & Y_0>=-8 & W3< 42          0.007  exposed           149
-    ## 5   L2_0>=0.25 & Y_0< -2 & L2_0< 0.35          0.008  exposed           244
-    ## 6  L2_0>=0.25 & L2_0< 0.3 & W2=female          0.008  exposed           126
-    ##   subgroup.rel.size
-    ## 1              51.7
-    ## 2              79.3
-    ## 3              10.8
-    ## 4               7.3
-    ## 5              11.9
-    ## 6               6.2
+    ## [1] "No problematic subgroup was identified."
     ## 
     ## $T4
-    ##                               subgroup proba.exposure exposure subgroup.size
-    ## 1                            L1_0>=900          0.014  exposed          1185
-    ## 2                            L2_0>=0.3          0.015  exposed           136
-    ## 3                  L3_0>=0 & L3_0< 0.5          0.009  exposed           107
-    ## 4                           L1_4>=1040          0.012  exposed          1534
-    ## 5                           L2_4>=0.35          0.010  exposed           315
-    ## 6                     Y_0>=-2 & W3< 36          0.014  exposed           346
-    ## 7  Y_0>=-6 & W3>=42 & W3< 54 & Y_0< -3          0.015  exposed           136
-    ## 8          L3_4>=-1 & W3< 36 & L3_4< 0          0.011  exposed           284
-    ## 9           L3_4>=-1 & W3< 48 & W3>=42          0.008  exposed           123
-    ## 10                   W1=west & Y_0>=-2          0.006  exposed           179
-    ##    subgroup.rel.size
-    ## 1               62.3
-    ## 2                7.2
-    ## 3                5.6
-    ## 4               80.7
-    ## 5               16.6
-    ## 6               18.2
-    ## 7                7.2
-    ## 8               14.9
-    ## 9                6.5
-    ## 10               9.4
+    ## [1] "No problematic subgroup was identified."
     ## 
     ## $T5
-    ##                                    subgroup proba.exposure exposure
-    ## 1                                L1_0>=1120          0.000  exposed
-    ## 2                                L1_5>=1060          0.011  exposed
-    ## 3                    L2_5>=0.35 & L2_5< 0.5          0.014  exposed
-    ## 4                        W3< 48 & L2_0>=0.3          0.000  exposed
-    ## 5       W3>=24 & Y_0< -3 & Y_0>=-4 & W3< 42          0.008  exposed
-    ## 6                          L3_5>=0 & W3< 42          0.013  exposed
-    ## 7              L2_0>=0.2 & Y_0>=-2 & Y_0< 0          0.015  exposed
-    ## 8                       L3_5>=0 & L2_0>=0.2          0.005  exposed
-    ## 9                      W1=west & L2_0>=0.25          0.008  exposed
-    ## 10 L3_5< 2 & L3_0>=-1 & L3_5>=1 & L3_0< 0.5          0.009  exposed
-    ## 11                        Y_0>=-3 & L3_5>=1          0.015  exposed
-    ## 12              Y_0>=-6 & W1=west & Y_0< -3          0.005  exposed
-    ##    subgroup.size subgroup.rel.size
-    ## 1            511              28.0
-    ## 2           1487              81.6
-    ## 3            351              19.3
-    ## 4             99               5.4
-    ## 5            131               7.2
-    ## 6            314              17.2
-    ## 7            261              14.3
-    ## 8            220              12.1
-    ## 9            121               6.6
-    ## 10           106               5.8
-    ## 11           201              11.0
-    ## 12           182              10.0
+    ## [1] "No problematic subgroup was identified."
     ## 
     ## $T6
-    ##                                     subgroup proba.exposure exposure
-    ## 1                                 L1_0>=1080          0.005  exposed
-    ## 2                                 L1_6>=1140          0.009  exposed
-    ## 3                                  L2_6>=0.4          0.011  exposed
-    ## 4  L2_0>=0.15 & W3< 24 & L2_0< 0.25 & W3>=18          0.015  exposed
-    ## 5                           L3_6>=1 & W3>=36          0.014  exposed
-    ## 6 L3_6>=0 & L3_6< 2 & L2_0>=0.2 & L2_0< 0.25          0.009  exposed
-    ## 7                         L3_6>=0 & L3_0< -1          0.010  exposed
-    ## 8                 L3_6>=1 & Y_0< 0 & Y_0>=-2          0.007  exposed
-    ##   subgroup.size subgroup.rel.size
-    ## 1           607              35.1
-    ## 2          1301              75.2
-    ## 3           182              10.5
-    ## 4           137               7.9
-    ## 5           146               8.4
-    ## 6           115               6.7
-    ## 7           199              11.5
-    ## 8           136               7.9
+    ## [1] "No problematic subgroup was identified."
 
-are the violations identified at each time for the strategy d2.
+are the violations identified at each time for the strategy d2. There is
+two list displayed at each time, `Aeq0` for the results when subsetting
+on `dt=0`, which is the subsetting of interested for our never initiate
+strategy, and `Aeq1` for the results when subsetting on `dt=1`, which
+make sense for a strategy like always treat. Both are computed since the
+algorithm is agnostic about the subsetting of interest.
 
 These violations are defined in terms of subgroups, such as the
-individuals with L1\_0&gt;=980 have 0.004% chance of being `A_1=1`,
-which represents 915 individuals (18.3% of the whole sample size). The
-`exposure` column seems unnecessary here, but it is useful for
-categorical treatment (not implemented yet for sPoRT).
+individuals with L1\_0&lt; 400 have 0.7% chance of being `A_1=0`, which
+represents 1223 individuals (24.5% of the whole sample size).
 
 However, the current use of sPoRT assume smoothing over treatment
 history. One can stratify on both time and treatment history through the
@@ -308,7 +234,6 @@ argument `add.subset` as follow:
     sport(D.bar=D.bar[[3]], A=treat, lag=0, type_A=type, cov.quanti=cov.quanti, cov.quali=cov.quali, data=simdata, pooling=F, beta=beta, alpha=alpha, gamma=gamma, monotony=monotony, static=static[3], add.subset=add.subset)
 
     ## [1] "time 1"
-    ## [1] "time 2"
 
     ## Error in port(A[t], type_A = type_A, cov.quanti = qtcov, cov.quali = qlcov, : Two modalities encoded 0 (for non-treated/non-exposed patients) and 1 (for treated/exposed patients) are required in the argument 'A' when the argument 'type_A' is 'b' (i.e., binary).
 
@@ -389,9 +314,11 @@ strategy due to pooling over time.
 
         d2_pool_results 
 
-    ##     subgroup proba.exposure exposure subgroup.size subgroup.rel.size
-    ## 1 L1_0>=1100          0.002  exposed          2775              28.2
-    ## 2   L1>=1160          0.004  exposed          5149              52.3
+    ## $Aeq1
+    ## [1] "Empty dataset."
+    ## 
+    ## $Aeq0
+    ## [1] "No problematic subgroup was identified."
 
 ## Other inputs and miscenallous
 
@@ -409,9 +336,9 @@ smaller/bigger nodes.
 
 ### References
 
-Chatton A, Schomaker M, Luque-Fernandez M-A, Platt RW, Schnitzer ME. Is
-checking for sequential positivity violations getting you down? Try
-sPoRT! *Submitted*. 2024.
+Chatton A, Schomaker M, Luque-Fernandez M-A, Platt RW, Schnitzer ME.
+Regression trees for nonparametric diagnostics of sequential positivity
+violations in longitudinal causal inference. *Submitted*. 2024.
 
 Gruber S, Phillips RV, Lee H, van der Laan MJ. Data-Adaptive Selection
 of the Propensity Score Truncation Level for
@@ -427,7 +354,398 @@ Therneau TM, Atkinson B. rpart: Recursive Partitioning and Regression
 Trees. 2019. <https://CRAN.R-project.org/package=rpart> (20 October
 2021, date last accessed).
 
+### Supplementary results
+
+        d3_strat_results 
+
+    ## $T1
+    ## $T1$Aeq1
+    ##    subgroup proba.exposure exposure subgroup.size subgroup.rel.size
+    ## 1 L1_0>=980          0.005  exposed           619              14.0
+    ## 2 L1_1>=960          0.007  exposed           812              18.4
+    ## 
+    ## $T1$Aeq0
+    ## [1] "No problematic subgroup was identified."
+    ## 
+    ## 
+    ## $T2
+    ## $T2$Aeq1
+    ##    subgroup proba.exposure exposure subgroup.size subgroup.rel.size
+    ## 1 L1_0>=940          0.008  exposed           735              40.4
+    ## 2 L1_2>=960          0.012  exposed          1010              55.5
+    ## 
+    ## $T2$Aeq0
+    ## [1] "The whole sample presents at least one exposure modality's prevalence higher than 1-beta."
+    ## 
+    ## 
+    ## $T3
+    ## $T3$Aeq1
+    ##                              subgroup proba.exposure exposure subgroup.size
+    ## 1                           L1_0>=940          0.008  exposed           736
+    ## 2                           L1_3>=960          0.016  exposed          1161
+    ## 3 W3>=36 & Y_0< -2 & Y_0>=-8 & W3< 42          0.009  exposed           112
+    ##   subgroup.rel.size
+    ## 1              47.9
+    ## 2              75.6
+    ## 3               7.3
+    ## 
+    ## $T3$Aeq0
+    ## [1] "The whole sample presents at least one exposure modality's prevalence higher than 1-beta."
+    ## 
+    ## 
+    ## $T4
+    ## $T4$Aeq1
+    ##                                       subgroup proba.exposure exposure
+    ## 1                                    L1_0>=900          0.014  exposed
+    ## 2                          L3_0>=0 & L3_0< 0.5          0.012  exposed
+    ## 3                                   L1_4>=1000          0.018  exposed
+    ## 4                                   L2_4>=0.25          0.014  exposed
+    ## 5              L2_0>=0.2 & L2_0< 0.25 & W3>=42          0.016  exposed
+    ## 6                             Y_0>=-2 & W3< 36          0.016  exposed
+    ## 7                  L3_4>=-1 & W3< 36 & L3_4< 0          0.015  exposed
+    ## 8         L3_4>=-1 & L3_4< 1 & W3>=42 & W3< 48          0.013  exposed
+    ## 9                             W1=west & W3>=30          0.018  exposed
+    ## 10                Y_0< 0 & L2_0>=0.2 & Y_0>=-2          0.017  exposed
+    ## 11            L2_0>=0.05 & Y_0>=-2 & L2_0< 0.1          0.013  exposed
+    ## 12                        L2_0>=0.15 & L3_4>=1          0.013  exposed
+    ## 13 L3_4>=-1 & L2_0>=0.2 & L2_0< 0.25 & L3_4< 0          0.011  exposed
+    ## 14                        W1=west & L2_0>=0.15          0.013  exposed
+    ## 15                           W1=west & Y_0>=-2          0.008  exposed
+    ##    subgroup.size subgroup.rel.size
+    ## 1            839              59.5
+    ## 2             83               5.9
+    ## 3           1195              84.8
+    ## 4            553              39.2
+    ## 5            122               8.7
+    ## 6            256              18.2
+    ## 7            201              14.3
+    ## 8             79               5.6
+    ## 9            222              15.8
+    ## 10           117               8.3
+    ## 11            79               5.6
+    ## 12            75               5.3
+    ## 13            89               6.3
+    ## 14           235              16.7
+    ## 15           131               9.3
+    ## 
+    ## $T4$Aeq0
+    ## [1] "The whole sample presents at least one exposure modality's prevalence higher than 1-beta."
+    ## 
+    ## 
+    ## $T5
+    ## $T5$Aeq1
+    ##                                            subgroup proba.exposure exposure
+    ## 1                                        L1_0>=1120          0.000  exposed
+    ## 2                                        L1_5>=1040          0.017  exposed
+    ## 3                                           L3_5>=1          0.018  exposed
+    ## 4                      L2_0>=0.15 & W3>=24 & W3< 30          0.011  exposed
+    ## 5           W3< 48 & W3>=36 & L3_0< -1 & L3_0>=-1.5          0.014  exposed
+    ## 6               W3< 48 & Y_0< -3 & W3>=24 & Y_0>=-4          0.015  exposed
+    ## 7               L2_0>=0.15 & L3_0>=-0.5 & L2_0< 0.2          0.011  exposed
+    ## 8                     L2_0>=0.15 & Y_0>=-1 & Y_0< 0          0.011  exposed
+    ## 9  L2_5>=0.25 & L2_0< 0.25 & L2_0>=0.15 & L2_5< 0.3          0.016  exposed
+    ## 10               L2_5< 0.2 & L2_0< 0.1 & L2_5>=0.15          0.013  exposed
+    ## 11                L3_0>=0 & W1=southern & L3_0< 0.5          0.014  exposed
+    ## 12                W2=female & L3_0>=-1 & L3_0< -0.5          0.018  exposed
+    ## 13                             L2_5>=0.25 & Y_0>=-2          0.018  exposed
+    ## 14                                Y_0< -3 & W1=west          0.015  exposed
+    ##    subgroup.size subgroup.rel.size
+    ## 1            347              25.8
+    ## 2           1116              83.0
+    ## 3            169              12.6
+    ## 4             93               6.9
+    ## 5             72               5.4
+    ## 6            131               9.7
+    ## 7             87               6.5
+    ## 8             94               7.0
+    ## 9            247              18.4
+    ## 10            79               5.9
+    ## 11            72               5.4
+    ## 12           112               8.3
+    ## 13           219              16.3
+    ## 14           130               9.7
+    ## 
+    ## $T5$Aeq0
+    ## [1] "The whole sample presents at least one exposure modality's prevalence higher than 1-beta."
+    ## 
+    ## 
+    ## $T6
+    ## $T6$Aeq1
+    ##                                          subgroup proba.exposure exposure
+    ## 1                                      L1_0>=1080          0.007  exposed
+    ## 2                                      L1_6>=1120          0.016  exposed
+    ## 3        L2_0>=0.15 & L2_0< 0.2 & W3< 24 & W3>=18          0.000  exposed
+    ## 4                    L3_0< -1.5 & W3>=48 & W3< 54          0.015  exposed
+    ## 5        L2_6>=0.2 & W3< 24 & W3>=18 & L2_6< 0.35          0.017  exposed
+    ## 6                 L2_6>=0.2 & W3>=48 & L2_6< 0.25          0.014  exposed
+    ## 7                                L3_6>=1 & W3>=36          0.018  exposed
+    ## 8           L3_6>=-4 & W3< 54 & W3>=48 & L3_6< -1          0.015  exposed
+    ## 9  L2_0>=0.15 & L2_0< 0.2 & L3_0< -1.5 & L3_0>=-2          0.000  exposed
+    ## 10             L2_0< 0.2 & L2_6>=0.3 & L2_0>=0.15          0.014  exposed
+    ## 11              L3_6>=1 & L2_0< 0.25 & L2_0>=0.15          0.018  exposed
+    ## 12               L2_6>=0.3 & L3_0< 0.5 & L3_0>=-1          0.019  exposed
+    ## 13                           L3_6>=1 & L3_0< -0.5          0.000  exposed
+    ## 14                L3_6< 1 & L3_0< -1.5 & L3_6>=-1          0.019  exposed
+    ## 15     L2_6>=0.2 & Y_0>=-2 & Y_0< -1 & L2_6< 0.25          0.015  exposed
+    ## 16                     L3_6>=1 & Y_0< 0 & Y_0>=-2          0.010  exposed
+    ##    subgroup.size subgroup.rel.size
+    ## 1            416              32.9
+    ## 2            967              76.6
+    ## 3             70               5.5
+    ## 4             68               5.4
+    ## 5            119               9.4
+    ## 6             72               5.7
+    ## 7            111               8.8
+    ## 8             67               5.3
+    ## 9             73               5.8
+    ## 10           139              11.0
+    ## 11           109               8.6
+    ## 12           103               8.2
+    ## 13            89               7.0
+    ## 14           157              12.4
+    ## 15            67               5.3
+    ## 16           101               8.0
+    ## 
+    ## $T6$Aeq0
+    ## [1] "The whole sample presents at least one exposure modality's prevalence higher than 1-beta."
+
+        d4_strat_results
+
+    ## $T1
+    ## $T1$Aeq1
+    ##    subgroup proba.exposure exposure subgroup.size subgroup.rel.size
+    ## 1 L1_0>=980          0.006  exposed           181               7.9
+    ## 2 L1_1>=960          0.008  exposed           249              10.9
+    ## 
+    ## $T1$Aeq0
+    ##                 subgroup proba.exposure  exposure subgroup.size
+    ## 1              L1_1< 460          0.009 unexposed           213
+    ## 2 L1_0< 400 & L2_0< 0.25          0.006 unexposed           172
+    ## 3  L1_0< 400 & L2_1< 0.3          0.006 unexposed           175
+    ##   subgroup.rel.size
+    ## 1               7.9
+    ## 2               6.4
+    ## 3               6.5
+    ## 
+    ## 
+    ## $T2
+    ## $T2$Aeq1
+    ##                            subgroup proba.exposure exposure subgroup.size
+    ## 1                         L1_0>=960          0.000  exposed           210
+    ## 2                         L1_2>=940          0.023  exposed           351
+    ## 3 L3_0< -2 & L3_0>=-2.5 & L2_0< 0.1          0.029  exposed            34
+    ## 4                 W2=male & L3_0>=0          0.026  exposed            38
+    ##   subgroup.rel.size
+    ## 1              31.7
+    ## 2              53.0
+    ## 3               5.1
+    ## 4               5.7
+    ## 
+    ## $T2$Aeq0
+    ## [1] "No problematic subgroup was identified."
+    ## 
+    ## 
+    ## $T3
+    ## $T3$Aeq1
+    ##                                           subgroup proba.exposure exposure
+    ## 1                                        L1_0>=920          0.015  exposed
+    ## 2                                        L1_3>=920          0.018  exposed
+    ## 3                                        L2_3>=0.2          0.022  exposed
+    ## 4                      W3< 24 & L2_0>=0.1 & W3>=18          0.024  exposed
+    ## 5                      W3>=24 & L2_0>=0.1 & W3< 30          0.028  exposed
+    ## 6                       L3_0< -1 & W3< 48 & W3>=36          0.027  exposed
+    ## 7                   L3_0< -1 & W3< 30 & L3_0>=-1.5          0.026  exposed
+    ## 8                                 W3< 24 & Y_0>=-2          0.021  exposed
+    ## 9                       W3< 24 & Y_0>=-4 & Y_0< -3          0.032  exposed
+    ## 10                       Y_0< -2 & W3>=36 & W3< 42          0.000  exposed
+    ## 11                       Y_0< -2 & W3>=48 & W3< 54          0.024  exposed
+    ## 12                               W3< 24 & L3_3>=-2          0.031  exposed
+    ## 13                      L3_3< -2 & W3< 54 & W3>=36          0.028  exposed
+    ## 14                                W3< 24 & W1=west          0.000  exposed
+    ## 15                              W3< 24 & W2=female          0.015  exposed
+    ## 16                       W2=male & W3>=36 & W3< 42          0.026  exposed
+    ## 17  L2_0>=0.05 & L3_0< -1.5 & L3_0>=-2 & L2_0< 0.1          0.033  exposed
+    ## 18 L2_0>=0.05 & L3_0>=-3 & L3_0< -2.5 & L2_0< 0.15          0.033  exposed
+    ## 19                   L3_0< -1 & Y_0< -3 & L3_0>=-2          0.000  exposed
+    ## 20               L3_0>=-2.5 & L3_0< -1.5 & Y_0>=-2          0.031  exposed
+    ## 21     L3_0< -1.5 & L3_3>=-2 & L3_0>=-2 & L3_3< -1          0.029  exposed
+    ## 22             L3_0< -1.5 & L3_0>=-2 & W1=southern          0.030  exposed
+    ## 23                 L3_0>=-3.5 & L3_0< -2 & W1=west          0.022  exposed
+    ## 24               L3_0< -1.5 & W2=female & L3_0>=-2          0.023  exposed
+    ## 25             L3_0>=-3.5 & W2=female & L3_0< -2.5          0.028  exposed
+    ## 26                              L3_3>=-2 & Y_0< -4          0.000  exposed
+    ## 27                     Y_0< -1 & L3_3>=0 & Y_0>=-2          0.024  exposed
+    ## 28                     Y_0>=-3 & Y_0< -2 & W1=west          0.033  exposed
+    ## 29                   Y_0>=-5 & W2=female & Y_0< -4          0.031  exposed
+    ##    subgroup.size subgroup.rel.size
+    ## 1            267              48.6
+    ## 2            438              79.8
+    ## 3             46               8.4
+    ## 4             42               7.7
+    ## 5             36               6.6
+    ## 6             74              13.5
+    ## 7             39               7.1
+    ## 8             47               8.6
+    ## 9             31               5.6
+    ## 10            40               7.3
+    ## 11            42               7.7
+    ## 12            98              17.9
+    ## 13            36               6.6
+    ## 14            35               6.4
+    ## 15            65              11.8
+    ## 16            38               6.9
+    ## 17            30               5.5
+    ## 18            30               5.5
+    ## 19            64              11.7
+    ## 20            32               5.8
+    ## 21            34               6.2
+    ## 22            67              12.2
+    ## 23            45               8.2
+    ## 24            44               8.0
+    ## 25            36               6.6
+    ## 26            39               7.1
+    ## 27            42               7.7
+    ## 28            30               5.5
+    ## 29            32               5.8
+    ## 
+    ## $T3$Aeq0
+    ## [1] "No problematic subgroup was identified."
+    ## 
+    ## 
+    ## $T4
+    ## $T4$Aeq1
+    ##                      subgroup proba.exposure exposure subgroup.size
+    ## 1                  L1_0>=1000          0.000  exposed           189
+    ## 2       L1_0< 800 & L1_0>=760          0.000  exposed            31
+    ## 3                  L2_0< 0.05          0.000  exposed            28
+    ## 4                     L3_0>=0          0.019  exposed            53
+    ## 5           Y_0>=-2 & Y_0< -1          0.033  exposed           121
+    ## 6                      Y_0>=0          0.034  exposed            29
+    ## 7                  L1_4>=1000          0.021  exposed           422
+    ## 8                   L2_4>=0.2          0.024  exposed           125
+    ## 9  L3_4>=-2 & W3< 48 & W3>=36          0.021  exposed            97
+    ## 10          L3_4>=-2 & W3< 24          0.029  exposed           103
+    ## 11 W3< 36 & W3>=24 & L3_4>=-1          0.033  exposed            60
+    ## 12 W3>=48 & L3_4>=0 & L3_4< 1          0.036  exposed            28
+    ## 13       W3< 18 & W1=southern          0.026  exposed            38
+    ## 14           W3>=30 & W1=west          0.033  exposed            61
+    ## 15           W3< 24 & W2=male          0.031  exposed            65
+    ## 16         W2=female & W3< 18          0.032  exposed            31
+    ##    subgroup.rel.size
+    ## 1               37.4
+    ## 2                6.1
+    ## 3                5.5
+    ## 4               10.5
+    ## 5               24.0
+    ## 6                5.7
+    ## 7               83.6
+    ## 8               24.8
+    ## 9               19.2
+    ## 10              20.4
+    ## 11              11.9
+    ## 12               5.5
+    ## 13               7.5
+    ## 14              12.1
+    ## 15              12.9
+    ## 16               6.1
+    ## 
+    ## $T4$Aeq0
+    ## [1] "No problematic subgroup was identified."
+    ## 
+    ## 
+    ## $T5
+    ## $T5$Aeq1
+    ##                                          subgroup proba.exposure exposure
+    ## 1                                          W3< 18          0.019  exposed
+    ## 2                                       L1_0>=880          0.029  exposed
+    ## 3                                      L1_5>=1040          0.021  exposed
+    ## 4                                      L2_5>=0.25          0.032  exposed
+    ## 5                                         L3_5>=1          0.015  exposed
+    ## 6                                        L3_5< -3          0.033  exposed
+    ## 7  L2_0< 0.1 & L2_0>=0.05 & L3_0>=-2.5 & L3_0< -2          0.000  exposed
+    ## 8                L2_0>=0.15 & L3_0< -1 & L3_0>=-2          0.000  exposed
+    ## 9                             L2_0< 0.1 & Y_0< -3          0.031  exposed
+    ## 10               L2_0< 0.1 & L2_0>=0.05 & W1=west          0.025  exposed
+    ## 11                   Y_0< -3 & Y_0>=-4 & L3_0< -2          0.000  exposed
+    ## 12      Y_0>=-5 & L3_0< -1 & Y_0< -4 & L3_0>=-2.5          0.028  exposed
+    ## 13                             W1=west & L3_0< -2          0.022  exposed
+    ## 14              W1=southern & L3_0< 0.5 & L3_0>=0          0.030  exposed
+    ## 15               W2=female & L3_0>=-1.5 & L3_0< 0          0.031  exposed
+    ## 16                W2=male & L3_0< -2 & L3_0>=-2.5          0.034  exposed
+    ## 17                              W1=west & Y_0< -3          0.000  exposed
+    ##    subgroup.size subgroup.rel.size
+    ## 1             53              11.1
+    ## 2            308              64.3
+    ## 3            389              81.2
+    ## 4             31               6.5
+    ## 5             65              13.6
+    ## 6             30               6.3
+    ## 7             24               5.0
+    ## 8             26               5.4
+    ## 9             65              13.6
+    ## 10            40               8.4
+    ## 11            46               9.6
+    ## 12            36               7.5
+    ## 13            45               9.4
+    ## 14            33               6.9
+    ## 15            98              20.5
+    ## 16            29               6.1
+    ## 17            42               8.8
+    ## 
+    ## $T5$Aeq0
+    ## [1] "No problematic subgroup was identified."
+    ## 
+    ## 
+    ## $T6
+    ## $T6$Aeq1
+    ##                                subgroup proba.exposure exposure subgroup.size
+    ## 1                       W3< 54 & W3>=42          0.037  exposed           107
+    ## 2                             L1_0>=940          0.033  exposed           246
+    ## 3                 L3_0>=-2.5 & L3_0< -2          0.033  exposed            61
+    ## 4                            L1_6>=1120          0.019  exposed           324
+    ## 5                L2_6>=0.2 & L2_6< 0.25          0.037  exposed           108
+    ## 6                               L3_6>=1          0.028  exposed            72
+    ## 7      L2_0>=0.15 & Y_0>=-3 & L2_0< 0.2          0.026  exposed            38
+    ## 8         Y_0>=-5 & L2_0< 0.1 & Y_0< -3          0.034  exposed            58
+    ## 9  L2_0>=0.15 & L2_0< 0.2 & W1=southern          0.038  exposed            53
+    ## 10               L2_0>=0.15 & W2=female          0.024  exposed            42
+    ## 11          Y_0< -2 & W1=west & Y_0>=-3          0.000  exposed            23
+    ##    subgroup.rel.size
+    ## 1               23.9
+    ## 2               54.9
+    ## 3               13.6
+    ## 4               72.3
+    ## 5               24.1
+    ## 6               16.1
+    ## 7                8.5
+    ## 8               12.9
+    ## 9               11.8
+    ## 10               9.4
+    ## 11               5.1
+    ## 
+    ## $T6$Aeq0
+    ## [1] "No problematic subgroup was identified."
+
+        d3_pool_results
+
+    ## $Aeq1
+    ##     subgroup proba.exposure exposure subgroup.size subgroup.rel.size
+    ## 1 L1_0>=1080          0.003  exposed          2066              28.0
+    ## 2   L1>=1140          0.006  exposed          3820              51.8
+    ## 
+    ## $Aeq0
+    ## [1] "No problematic subgroup was identified."
+
+        d4_pool_results
+
+    ## $Aeq1
+    ##     subgroup proba.exposure exposure subgroup.size subgroup.rel.size
+    ## 1 L1_0>=1060          0.006  exposed           680              25.7
+    ## 2   L1>=1120          0.010  exposed          1307              49.5
+    ## 
+    ## $Aeq0
+    ## [1] "No problematic subgroup was identified."
+
 ### Updates history
 
 First update planned for the release of the `port` package.
-
