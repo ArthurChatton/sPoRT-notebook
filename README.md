@@ -5,10 +5,9 @@ Arthur Chatton
 
 ## Goal
 
-This is the notebook related to the paper “Regression trees for
-nonparametric diagnostics of sequential positivity violations in
-longitudinal causal inference” by Chatton, Schomaker, Luque-Fernandez,
-Platt and Schnitzer (Submitted).
+This is the notebook related to the paper “Is checking for sequential positivity violations getting
+you down? Try sPoRT!” by Chatton, Schomaker, Luque-Fernandez,
+Platt and Schnitzer (Accepted in *Epidemiology*).
 
 This notebook aims to illustrate the sPoRT algorithm’s use with
 illustrations on a simulated dataset. The algorithm is implemented in R
@@ -340,8 +339,8 @@ smaller/bigger nodes.
 ### References
 
 Chatton A, Schomaker M, Luque-Fernandez M-A, Platt RW, Schnitzer ME.
-Regression trees for nonparametric diagnostics of sequential positivity
-violations in longitudinal causal inference. *arXiv*. 2024. 
+Is checking for sequential positivity violations getting
+you down? Try sPoRT!. *Accepted in Epidemiology*. 2025. 
 DOI: 10.48550/arXiv.2412.10245
 
 
