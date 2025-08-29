@@ -1,13 +1,13 @@
 Sequential Positivity-Regression Trees (sPoRT) notebook
 ================
 Arthur Chatton
-2024-12-16
+2025-08-26
 
 ## Goal
 
 This is the notebook related to the paper “Is checking for sequential positivity violations getting
 you down? Try sPoRT!” by Chatton, Schomaker, Luque-Fernandez,
-Platt and Schnitzer (Accepted in *Epidemiology*).
+Platt and Schnitzer (In press in *Epidemiology*).
 
 This notebook aims to illustrate the sPoRT algorithm’s use with
 illustrations on a simulated dataset. The algorithm is implemented in R
@@ -19,7 +19,8 @@ but we assume only basic knowledge of R.
     library(rpart.plot)
 
     simdata <- read.csv('sim_data_sport.csv', stringsAsFactors = TRUE)
-    source('port_utils.r')
+    devtools::install_github("ArthurChatton/PoRT") #install.packages("devtools") if not installed
+    library(PoRT)
 
 The simulated dataset comes from Schomaker et al. (2019).
 
@@ -58,10 +59,10 @@ The simulated dataset comes from Schomaker et al. (2019).
     ##  Max.   :  3.000  
     ##  NA's   :425
 
-The dataset `simdata` is composed of 5000 individuals and 43 variables.
+The dataset `simdata` comprises 5000 individuals and 43 variables.
 
 1.  `Wx` are baseline confounders
-2.  `Lx_t` are time-varying confouders at time t (t=0 for baseline
+2.  `Lx_t` are time-varying confounders at time t (t=0 for baseline
     value)
 3.  `A_t` are treatment value at time t (1 if treated)
 4.  `C_t` are censoring indicator at time t (1 if censored)
@@ -98,7 +99,7 @@ Let four treatment strategies:
         simdata[,paste0('d3_',t)] <- 1*(simdata[,paste0('L1_',t)] < 750 | simdata[,paste0('L2_',t)] < 0.25)
         simdata[,paste0('d4_',t)] <- 1*(simdata[,paste0('L1_',t)] < 350 | simdata[,paste0('L2_',t)] < 0.15)
         
-      }else{ #other time-points, censoring may occurs and should be considered
+      }else{ #other time-points, censoring may occur and should be considered
         
         simdata[,paste0('d1_',t)] <- ifelse(simdata[,paste0('C_',tps[which(t==tps)-1])]==1, NA, 1)
         simdata[,paste0('d2_',t)] <- ifelse(simdata[,paste0('C_',tps[which(t==tps)-1])]==1, NA, 0)
@@ -121,7 +122,7 @@ Let four treatment strategies:
     ## Input 2a: qualitative confounders columns' name, one vector per time-point
     cov.quali <- rep(list(c("W1", "W2")), 6)
 
-    ## Input 2b: quantative confounders columns' name, one vector per time-point
+    ## Input 2b: quantitative confounders columns' name, one vector per time-point
     cov.quanti <- list(
       t1 = c("W3", grep("_0", names(simdata), value=T), "L1_1", 'L2_1', 'L3_1'),
       t2 = c("W3", grep("_0", names(simdata), value=T), "L1_2", 'L2_2', 'L3_2'),
@@ -139,19 +140,19 @@ Let four treatment strategies:
 
     ## Input 4: sPoRT hyperparameters
     alpha <- 0.05 #Personal preference, other values are meaningful as well.
-    beta <- "gruber" #to use Gruber's bound defined in Gruber et al. (2022) Adapt to the sample size at time t.
+    beta <- "gruber" #to use Gruber's bound defined in Gruber et al. (2022) that adapts to the sample size at time t.
     gamma <- 2 #maximum complexity level of the subgroups (here combination of two confounders max.)
 
     ## Input 5: sPoRT hyperparameters
         monotony <- TRUE #there is a monotone treatment pattern in the data. The function will automatically check positivity on untreated individuals.
-        static <- c(TRUE, TRUE, FALSE, FALSE) #d1 and d2 are static, while d3 and d4 are dynamic. When dynamic, sPoRT will check the probability of being treated among those following the rule at time t AND the probability of being to be untreated among those not following the rule.
+        static <- c(TRUE, TRUE, FALSE, FALSE) #d1 and d2 are static, while d3 and d4 are dynamic. When dynamic, sPoRT will check the probability of being treated among those following the rule at time t AND the probability of being untreated among those not following the rule.
 
 Now, we can run the `sport` function.
 
 ### sPoRT running and output
 
     #let's begin with stratification on time (argument pooling=FALSE)
-    #we did not consider rule 1 since the immediate initiation make only sense at time 1.
+    #we did not consider rule 1 since the immediate initiation makes only sense at time 1.
 
         d2_strat_results <- sport(D.bar=D.bar[[2]], A=treat, lag=0, type_A=type, cov.quanti=cov.quanti, cov.quali=cov.quali, data=simdata, pooling=F, beta=beta, alpha=alpha, gamma=gamma, monotony=monotony, static=static[2])
 
@@ -208,8 +209,8 @@ instance:
     ## [1] "No problematic subgroup was identified."
 
 are the violations identified at each time for the strategy d2. There is
-two list displayed at each time, `Aeq0` for the results when subsetting
-on `dt=0`, which is the subsetting of interested for our never initiate
+two lists displayed at each time, `Aeq0` for the results when subsetting
+on `dt=0`, which is the subsetting of interest for our never initiate
 strategy, and `Aeq1` for the results when subsetting on `dt=1`, which
 make sense for a strategy like always treat. Both are computed since the
 algorithm is agnostic about the subsetting of interest. However, both
@@ -221,11 +222,11 @@ These violations are defined in terms of subgroups, such as the
 individuals with L1\_0&lt; 400 have 0.7% chance of being `A_1=0`, which
 represents 1223 individuals (24.5% of the whole sample size).
 
-However, the current use of sPoRT assume smoothing over treatment
+However, the current use of sPoRT assumes smoothing over treatment
 history. One can stratify on both time and treatment history through the
-argument `add.subset` as follow:
+argument `add.subset` as follows:
 
-    # the `add.subset` argument takes a vector of column's names of `data` (one per time-point). Rows should be coded 1 if kept, and 0 if dropped.
+    # the `add.subset` argument takes a vector of column names of `data` (one per time-point). Rows should be coded 1 if kept, and 0 if dropped.
 
     for(i in tps){
       simdata[,paste0("addsub_", tps)] <- 1*(simdata[,paste0("A_", tps)] == simdata[,paste0("d3_", tps)])
@@ -239,10 +240,10 @@ argument `add.subset` as follow:
 
     ## Error in port(A[t], type_A = type_A, cov.quanti = qtcov, cov.quali = qlcov, : Two modalities encoded 0 (for non-treated/non-exposed patients) and 1 (for treated/exposed patients) are required in the argument 'A' when the argument 'type_A' is 'b' (i.e., binary).
 
-Here, positivity is checked at each time for the individuals that should
-initiate at this time but having not initiated nor should have initiated
-before. The error is present because at one time there is only treated
-or untreated individuals in this subset, which is a common occurence
+Here, positivity is checked at each time for the individuals who should
+initiate at this time, but having not initiated, nor should have initiated
+before. The error is present because, at one time, there is only treated
+or untreated individuals in this subset, which is a common occurrence
 when stratifying on treatment history.
 
 ## sPoRT with pooling over time-points
@@ -294,14 +295,14 @@ treatment (for subseting on A\_t-1=0).
 
         ## Input 4: sPoRT hyperparameters
         alpha <- 0.05 #Personal preference, other values are meaningful as well.
-        beta <- "gruber" #to use Gruber's bound defined in Gruber et al. (2022) Adapt to sample size.
+        beta <- "gruber" #to use Gruber's bound defined in Gruber et al. (2022) that adapts to sample size.
         gamma <- 2 #maximum complexity level of the subgroups (here, a combination of two confounders max.)
 
-        ## Input 5: sPoRT hyperparameters, monotony must be the column name of the lagged A when pooling=TRUE due to implementation issue (only if there is a monotone treatment pattern in the data). 
+        ## Input 5: sPoRT hyperparameters, monotony must be the column name of the lagged A when pooling=TRUE due to an implementation issue (only if there is a monotone treatment pattern in the data). 
         monotony <- "Alag" #The function will automatically check positivity on individuals with Alag=0
         static <- c(TRUE, TRUE, FALSE, FALSE) #d1 is static, d3 and d4 are dynamic. 
 
-Now, we can run the `sport` function, with the argument `pooling=TRUE`.
+Now, we can run the `sport` function with the argument `pooling=TRUE`.
 
 ### sPoRT running and output
 
@@ -311,7 +312,7 @@ Now, we can run the `sport` function, with the argument `pooling=TRUE`.
 
         d4_pool_results <- sport(D.bar=D.bar[[4]], A="A", time='T', lag=0, type_A=type, cov.quanti=cov.quanti, cov.quali=cov.quali, data=pool, pooling=TRUE, alpha=alpha, beta=beta, gamma=gamma, static=static[4], monotony=monotony)
 
-Results’ presentation is similar; but one sees only one table per
+Results’ presentation is similar, but one sees only one table per
 strategy due to pooling over time.
 
         d2_pool_results 
@@ -322,27 +323,25 @@ strategy due to pooling over time.
     ## $Aeq0
     ## [1] "No problematic subgroup was identified."
 
-## Other inputs and miscenallous
+## Other inputs and miscellaneous
 
-The `sport`function can takes several other arguments. First, `lag` is
-used to add lagged effects (e.g., `lag=1` means that we add
-automatically the counfounders from the one time to the next, such as
+The `sport` function can take several other arguments. First, `lag` is
+used to add lagged effects (e.g., `lag=1` means that we automatically add the confounders from the one time to the next, such as
 `L1_1` in the second time). Second, `pruning` can be set to `TRUE` when
-one focus only on structural violations, because this remove violations
+one focuses only on structural violations, because this removes violations
 bounded between two values from the output for clarity (e.g., this may
 remove violations such as `L1_0>=960 & L1_0< 860`). Last, the `rpart`
 hyperparameters can also be set (Therneau, 2019). By default, the
-function use `minbucket = 6`, `minsplit = 20`, and `maxdepth = 30` to
-allows small subgroups. Other values can be set to split only
-smaller/bigger nodes.
+function uses `minbucket = 6`, `minsplit = 20`, and `maxdepth = 30` to
+allow small subgroups. Other values can be set to split only
+smaller/bigger nodes. 
 
 ### References
 
 Chatton A, Schomaker M, Luque-Fernandez M-A, Platt RW, Schnitzer ME.
 Is checking for sequential positivity violations getting
-you down? Try sPoRT!. *Accepted in Epidemiology*. 2025. 
-DOI: 10.48550/arXiv.2412.10245
-
+you down? Try sPoRT!. *In press in Epidemiology*. 2025. 
+DOI: 10.1097/EDE.0000000000001902
 
 Gruber S, Phillips RV, Lee H, van der Laan MJ. Data-Adaptive Selection
 of the Propensity Score Truncation Level for
