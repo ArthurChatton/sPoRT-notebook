@@ -229,7 +229,7 @@ argument `add.subset` as follows:
     # the `add.subset` argument takes a vector of column names of `data` (one per time-point). Rows should be coded 1 if kept, and 0 if dropped.
 
     for(i in tps){
-      simdata[,paste0("addsub_", tps)] <- 1*(simdata[,paste0("A_", tps)] == simdata[,paste0("d3_", tps)])
+      simdata[,paste0("addsub_", i)] <- 1*(simdata[,paste0("A_", i)] == simdata[,paste0("d3_", i)])
     }
 
     add.subset <- grep("addsub_", names(simdata), value=T)
